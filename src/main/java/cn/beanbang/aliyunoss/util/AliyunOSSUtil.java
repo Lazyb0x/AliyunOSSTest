@@ -1,14 +1,15 @@
 package cn.beanbang.aliyunoss.util;
 
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,7 +45,8 @@ public class AliyunOSSUtil {
 
     /**
      * 从输入流上传
-     * @param objectName 对象路径
+     *
+     * @param objectName  对象路径
      * @param inputStream 输入流
      */
     public void upload(String objectName, InputStream inputStream) {
@@ -58,8 +60,9 @@ public class AliyunOSSUtil {
 
     /**
      * 下载对象到本地文件
+     *
      * @param objectName 对象路径
-     * @param file 文件
+     * @param file       文件
      */
     public void download(String objectName, File file) {
         OSS ossClient = ossConfig.getOssClient();
@@ -68,6 +71,39 @@ public class AliyunOSSUtil {
         ossClient.getObject(new GetObjectRequest(bucketName, objectName), file);
 
         ossClient.shutdown();
+    }
+
+    /**
+     * 获取对象的下载链接，链接在指定时间内过期
+     *
+     * @param objectName   对象路径
+     * @param milliseconds 过期时间（毫秒），从请求时开始算起
+     * @return 文件的 URL
+     */
+    public URL temporaryUrl(String objectName, long milliseconds) {
+        OSS ossClient = ossConfig.getOssClient();
+        String bucketName = ossConfig.getBucketName();
+
+        Date expiration = new Date(new Date().getTime() + milliseconds);
+        URL url = ossClient.generatePresignedUrl(bucketName, objectName, expiration);
+
+        ossClient.shutdown();
+        return url;
+    }
+
+    /**
+     * 判断对象是否存在
+     * @param objectName 对象路径
+     * @return 是否存在
+     */
+    public boolean isExist(String objectName) {
+        OSS ossClient = ossConfig.getOssClient();
+        String bucketName = ossConfig.getBucketName();
+
+        boolean found = ossClient.doesObjectExist(bucketName, objectName);
+
+        ossClient.shutdown();
+        return found;
     }
 
     /**
@@ -99,12 +135,13 @@ public class AliyunOSSUtil {
 
     /**
      * 多线程下载对象到文件
+     *
      * @param objectName 对象路径
-     * @param file 文件
-     * @param partSize 文件分片大小（byte）
-     * @param nThreads 并行线程数量
+     * @param file       文件
+     * @param partSize   文件分片大小（byte）
+     * @param nThreads   并行线程数量
      */
-    public void concurrentUpload(String objectName, File file, final long partSize, int nThreads) throws Exception{
+    public void concurrentUpload(String objectName, File file, final long partSize, int nThreads) throws Exception {
         OSS ossClient = ossConfig.getOssClient();
         String bucketName = ossConfig.getBucketName();
 
@@ -160,7 +197,7 @@ public class AliyunOSSUtil {
 
         executorService.shutdown();
         // 等待线程池结束
-        while (!executorService.isTerminated()){
+        while (!executorService.isTerminated()) {
             executorService.awaitTermination(200, TimeUnit.MILLISECONDS);
         }
 
@@ -177,13 +214,14 @@ public class AliyunOSSUtil {
 
     /**
      * 断点续传下载
+     *
      * @param objectName 对象位置
-     * @param partSize 分片大小(byte)
-     * @param taskNum 并发任务数量
-     * @param fileName 下载文件名
+     * @param partSize   分片大小(byte)
+     * @param taskNum    并发任务数量
+     * @param fileName   下载文件名
      * @throws Throwable
      */
-    public void resumableDownload(String objectName, final long partSize, int taskNum, String fileName) throws Throwable{
+    public void resumableDownload(String objectName, final long partSize, int taskNum, String fileName) throws Throwable {
         // 创建OSSClient实例。
         OSS ossClient = ossConfig.getOssClient();
         String bucketName = ossConfig.getBucketName();
@@ -201,7 +239,7 @@ public class AliyunOSSUtil {
         // 下载成功时，会返回文件元信息。
         downloadRes.getObjectMetadata();
 
-         // 关闭OSSClient。
+        // 关闭OSSClient。
         ossClient.shutdown();
     }
 }

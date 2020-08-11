@@ -2,25 +2,22 @@ package cn.beanbang.aliyunoss.util;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
  * 从配置文件获取连接 OSS 的信息，并返回可连接的 OSS client
  */
 @Component
+@ConfigurationProperties(prefix = "aliyun.oss")
 public class AliyunOSSConfig {
 
-    @Value("${aliyun.oss.endpoint}")
     private String endpoint;
 
-    @Value("${aliyun.oss.accessKeyId}")
     private String accessKeyId;
 
-    @Value("${aliyun.oss.accessKeySecret}")
     private String accessKeySecret;
 
-    @Value("${aliyun.oss.bucketName}")
     private String bucketName;
 
     public OSS getOssClient() {

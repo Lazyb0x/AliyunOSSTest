@@ -8,6 +8,7 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,18 +47,32 @@ class AliyunOSSUtilTest {
     }
 
     @Test
-    void concurrentUpload() throws Exception{
+    void concurrentUpload() throws Exception {
         String objectName = "test/upload.zip";
         File localFile = ResourceUtils.getFile("classpath:upload.zip");
-        long partSize = 1024*1024L;
+        long partSize = 1024 * 1024L;
         ossUtil.concurrentUpload(objectName, localFile, partSize, 20);
     }
 
     @Test
-    void resumableDownload() throws Throwable{
+    void resumableDownload() throws Throwable {
         String objectName = "test/upload.zip";
-        long partSize = 1024*1024L;
+        long partSize = 1024 * 1024L;
         String fileName = "download.zip";
         ossUtil.resumableDownload(objectName, partSize, 10, fileName);
+    }
+
+    @Test
+    void temporaryUrl() {
+        String objectName = "test/Hello.txt";
+        URL url = ossUtil.temporaryUrl(objectName, 60 * 1000L);
+        log.info("URL: {}", url.toString());
+    }
+
+    @Test
+    void isExist() {
+        String objecrName = "test/Hello.txt";
+        boolean found = ossUtil.isExist(objecrName);
+        log.info("Exist? {}.", found ? "Yes" : "No");
     }
 }
